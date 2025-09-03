@@ -20,7 +20,7 @@ jobs:
       - name: Push para Docker Hub
         run: |
           echo ${{ secrets.malarial7abe4furnish.dregs}} | docker login -u ${{ secrets.ragazzikyndryl }} --password-stdin
-          docker push gragazzi/webserver:latest
+          docker push ragazzikyndryl/webserver:latest
 
       - name: Deploy no Kubernetes
         run: |
