@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CompareAki</title>
+  <style>
+    body { background: orange; font-family: Arial, sans-serif; }
+    table { border-collapse: collapse; width: 60%; margin-top: 20px; }
+    th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+  </style>
+</head>
+<body>
+  <h1>CompareAki 🛒</h1>
+
+  <label for="produtos">Escolha um produto:</label>
+  <select id="produtos">
+    <option value="">-- selecione --</option>
+  </select>
+
+  <table id="tabela" style="display:none;">
+    <thead>
+      <tr>
+        <th>Produto</th>
+        <th>Supermercado</th>
+        <th>Preço</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function carregarProdutos() {
+      const res = await fetch("http://192.168.0.172:30081/produtos"); // API Service
+      const produtos = await res.json();
+      const select = document.getElementById("produtos");
+      produtos.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.nome_produto;
+        select.appendChild(opt);
+      });
+    }
+
+    document.getElementById("produtos").addEventListener("change", async function() {
+      const id = this.value;
+      if (!id) return;
+
+      const res = await fetch(`http://192.168.0.172:30081/produtos/${id}`);
+      const dados = await res.json();
+
+      const tabela = document.getElementById("tabela");
+      const tbody = tabela.querySelector("tbody");
+      tbody.innerHTML = "";
+
+      dados.precos.forEach(d => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${dados.produto.nome_produto}</td><td>${d.supermercado}</td><td>R$ ${d.preco.toFixed(2)}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      tabela.style.display = "table";
+    });
+
+    carregarProdutos();
+  </script>
+</body>
+</html>
+
