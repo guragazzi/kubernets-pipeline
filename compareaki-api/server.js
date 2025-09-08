@@ -31,13 +31,16 @@ app.get("/produtos/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const precos = await pool.query(
-      `SELECT pr.nome_produto, s.nome AS supermercado, p.preco
-       FROM precos p
-       JOIN supermercados s ON p.supermercado_id = s.id
-       JOIN produtos pr ON p.produto_id = pr.id
-       WHERE p.produto_id = $1`,
-      [id]
-    );
+  `SELECT pr.nome_produto, s.nome AS supermercado, p.preco, p.data
+   FROM precos p
+   JOIN produtos pr ON p.produto_id = pr.id
+   JOIN supermercados s ON p.supermercado_id = s.id
+   WHERE p.produto_id = $1
+   ORDER BY p.data DESC`,
+  [id]
+);
+    
+
 
     res.json(precos.rows); // Agora já retorna uma lista simples com nome_produto, supermercado e preco
   } catch (err) {
