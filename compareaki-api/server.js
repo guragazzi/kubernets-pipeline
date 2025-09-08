@@ -26,20 +26,29 @@ app.get("/produtos", async (req, res) => {
   }
 });
 
-// Rota para pegar detalhes de um produto + preços
+   // Rota para pegar detalhes de um produto + preços
 app.get("/produtos/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const precos = await pool.query(
-  `SELECT pr.nome_produto, s.nome AS supermercado, p.preco, p.data
-   FROM precos p
-   JOIN produtos pr ON p.produto_id = pr.id
-   JOIN supermercados s ON p.supermercado_id = s.id
-   WHERE p.produto_id = $1
-   ORDER BY p.data DESC`,
-  [id]
-);
-    
+      `SELECT pr.nome_produto,
+              s.nome AS supermercado,
+              p.preco,
+              p.data_coleta
+       FROM precos p
+       JOIN produtos pr ON p.produto_id = pr.id
+       JOIN supermercados s ON p.supermercado_id = s.id
+       WHERE p.produto_id = $1
+       ORDER BY p.data_coleta DESC`,
+      [id]
+    );
+
+    res.json(precos.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao buscar detalhes do produto" });
+  }
+}); 
 
 
     res.json(precos.rows); // Agora já retorna uma lista simples com nome_produto, supermercado e preco

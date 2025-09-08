@@ -23,7 +23,7 @@
         <th>Produto</th>
         <th>Supermercado</th>
         <th>Preço</th>
-        <th>Data</th>
+        <th>Data da Coleta</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -52,8 +52,11 @@
       tbody.innerHTML = "";
       dados.forEach(d => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${d.nome_produto}</td><td>${d.supermercado}</td><td>R$ ${d.preco}</td><td>${d.data}</td>`;
-        tbody.appendChild(tr);
+     tr.innerHTML = `<td>${d.nome_produto}</td>
+                <td>${d.supermercado}</td>
+                <td>R$ ${d.preco}</td>
+                <td>${new Date(d.data_coleta).toLocaleDateString()}</td>`;
+     tbody.appendChild(tr);
       });
       tabela.style.display = "table";
     });
