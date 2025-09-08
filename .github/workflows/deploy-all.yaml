@@ -29,9 +29,9 @@ jobs:
       - name: Deploy Webserver to Kubernetes
         run: |
           cd webserver
-          kubectl apply -f k8s-deployment.yaml
-          kubectl set image deployment/webserver webserver=ragazzikyndryl/webserver:latest
-          kubectl rollout status deployment/webserver
+          microk8s kubectl apply -f k8s-deployment.yaml
+          microk8s kubectl set image deployment/webserver webserver=ragazzikyndryl/webserver:latest
+          microk8s kubectl rollout status deployment/webserver
 
       # -------- API --------
       - name: Build & Push API Docker image
@@ -43,8 +43,8 @@ jobs:
       - name: Deploy API to Kubernetes
         run: |
           cd compareaki-api
-          kubectl apply -f k8s-deployment.yaml
-          kubectl set image deployment/compareaki-api compareaki-api=ragazzikyndryl/compareaki-api:latest
-          kubectl rollout status deployment/compareaki-api
+          microk8s kubectl apply -f k8s-deployment.yaml
+          microk8s kubectl set image deployment/compareaki-api compareaki-api=ragazzikyndryl/compareaki-api:latest
+          microk8s kubectl rollout status deployment/compareaki-api
 
 
