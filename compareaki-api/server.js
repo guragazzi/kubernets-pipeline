@@ -18,15 +18,17 @@ const pool = new Pool({
 // Rota para listar todos os produtos
 app.get("/produtos", async (req, res) => {
   try {
-    const result = await pool.query("SELECT id, nome_produto, marca FROM produtos ORDER BY nome_produto");
+    const result = await pool.query(
+      "SELECT id, nome_produto, marca FROM produtos ORDER BY nome_produto"
+    );
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
+    console.error("Erro ao buscar produtos:", err);
     res.status(500).json({ error: "Erro ao buscar produtos" });
   }
 });
 
-   // Rota para pegar detalhes de um produto + preços
+// Rota para pegar detalhes de um produto + preços
 app.get("/produtos/:id", async (req, res) => {
   const { id } = req.params;
   try {
@@ -45,21 +47,13 @@ app.get("/produtos/:id", async (req, res) => {
 
     res.json(precos.rows);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Erro ao buscar detalhes do produto" });
-  }
-}); 
-
-
-    res.json(precos.rows); // Agora já retorna uma lista simples com nome_produto, supermercado e preco
-  } catch (err) {
-    console.error(err);
+    console.error("Erro ao buscar detalhes do produto:", err);
     res.status(500).json({ error: "Erro ao buscar detalhes do produto" });
   }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(` CompareAki API rodando na porta ${PORT}`);
+  console.log(`✅ CompareAki API rodando na porta ${PORT}`);
 });
 
