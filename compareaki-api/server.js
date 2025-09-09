@@ -9,7 +9,7 @@ app.use(express.json());
 // Config do banco Postgres no Kubernetes
 const pool = new Pool({
   user: "gragazzi",
-  host: "compareaki-postgres-service", // nome do service no K8s
+  host: "compareaki-postgres-service",
   database: "compareaki",
   password: "zxasqw12",
   port: 5432,
@@ -23,17 +23,19 @@ app.get("/produtos", async (req, res) => {
     );
     res.json(result.rows);
   } catch (err) {
-    console.error("Erro ao buscar produtos:", err);
+    console.error(err);
     res.status(500).json({ error: "Erro ao buscar produtos" });
   }
 });
 
-// Rota para pegar detalhes de um produto + preços
+// Rota para pegar detalhes de um produto + preços, descrição e peso
 app.get("/produtos/:id", async (req, res) => {
   const { id } = req.params;
   try {
     const precos = await pool.query(
       `SELECT pr.nome_produto,
+              pr.descricao,
+              pr.peso,
               s.nome AS supermercado,
               p.preco,
               p.data_coleta
@@ -47,13 +49,13 @@ app.get("/produtos/:id", async (req, res) => {
 
     res.json(precos.rows);
   } catch (err) {
-    console.error("Erro ao buscar detalhes do produto:", err);
+    console.error(err);
     res.status(500).json({ error: "Erro ao buscar detalhes do produto" });
   }
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`✅ CompareAki API rodando na porta ${PORT}`);
+  console.log(`CompareAki API rodando na porta ${PORT}`);
 });
 

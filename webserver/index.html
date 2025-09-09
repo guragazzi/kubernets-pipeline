@@ -5,7 +5,7 @@
   <title>CompareAki</title>
   <style>
     body { background: orange; font-family: Arial, sans-serif; }
-    table { border-collapse: collapse; width: 70%; margin-top: 20px; }
+    table { border-collapse: collapse; width: 80%; margin-top: 20px; }
     th, td { border: 1px solid #000; padding: 8px; text-align: left; }
   </style>
 </head>
@@ -21,6 +21,8 @@
     <thead>
       <tr>
         <th>Produto</th>
+        <th>Descrição</th>
+        <th>Peso</th>
         <th>Supermercado</th>
         <th>Preço</th>
         <th>Data da Coleta</th>
@@ -30,7 +32,7 @@
   </table>
 
   <script>
-    const API_BASE = "http://192.168.0.172:31997";
+    const API_BASE = "http://compareaki-api-service:3000"; // Nome do service no cluster
 
     async function carregarProdutos() {
       const res = await fetch(`${API_BASE}/produtos`);
@@ -47,19 +49,26 @@
     document.getElementById("produtos").addEventListener("change", async function() {
       const id = this.value;
       if (!id) return;
+
       const res = await fetch(`${API_BASE}/produtos/${id}`);
       const dados = await res.json();
       const tabela = document.getElementById("tabela");
       const tbody = tabela.querySelector("tbody");
       tbody.innerHTML = "";
+
       dados.forEach(d => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${d.nome_produto}</td>
-                        <td>${d.supermercado}</td>
-                        <td>R$ ${d.preco}</td>
-                        <td>${new Date(d.data_coleta).toLocaleDateString()}</td>`;
+        tr.innerHTML = `
+          <td>${d.nome_produto}</td>
+          <td>${d.descricao || '-'}</td>
+          <td>${d.peso || '-'}</td>
+          <td>${d.supermercado}</td>
+          <td>R$ ${d.preco}</td>
+          <td>${new Date(d.data_coleta).toLocaleDateString()}</td>
+        `;
         tbody.appendChild(tr);
       });
+
       tabela.style.display = "table";
     });
 
