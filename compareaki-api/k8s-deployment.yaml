@@ -32,4 +32,3 @@ spec:
     - port: 3000
       targetPort: 3000
       # nodePort removido para escolha automática
-

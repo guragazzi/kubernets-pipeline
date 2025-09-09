@@ -1,4 +1,4 @@
-name: Webserver & API CI/CD
+name: CompareAki Webserver & API CI/CD
 
 on:
   push:
@@ -23,9 +23,9 @@ jobs:
         password: ${{ secrets.DOCKER_PASSWORD }}
 
     # ---------- BUILD & PUSH WEBSERVER ----------
-    - name: Build & Push Webserver
+    - name: Build & Push CompareAki Webserver
       run: |
-        IMAGE=ragazzikyndryl/webserver
+        IMAGE=ragazzikyndryl/compareaki-webserver
         GIT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
         docker build -t $IMAGE:latest -t $IMAGE:$GIT_SHA ./webserver
         docker push $IMAGE:latest
@@ -33,9 +33,9 @@ jobs:
         echo "WEBSERVER_IMAGE=$IMAGE:$GIT_SHA" >> $GITHUB_ENV
 
     # ---------- BUILD & PUSH API ----------
-    - name: Build & Push API
+    - name: Build & Push CompareAki API
       run: |
-        IMAGE=ragazzikyndryl/api
+        IMAGE=ragazzikyndryl/compareaki-api
         GIT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
         docker build -t $IMAGE:latest -t $IMAGE:$GIT_SHA ./compareaki-api
         docker push $IMAGE:latest
@@ -45,34 +45,31 @@ jobs:
     # ---------- DEPLOY TO KUBERNETES ----------
     - name: Deploy to Kubernetes
       run: |
-        # Aplica os manifests (garante services/replicas/ports atualizados)
         microk8s kubectl apply -f ./webserver/k8s-deployment.yaml
         microk8s kubectl apply -f ./compareaki-api/k8s-deployment.yaml
 
-        # Atualiza imagens para SHA único
-        microk8s kubectl set image deployment/webserver webserver=${{ env.WEBSERVER_IMAGE }}
-        microk8s kubectl set image deployment/api api=${{ env.API_IMAGE }}
+        microk8s kubectl set image deployment/compareaki-webserver compareaki-webserver=${{ env.WEBSERVER_IMAGE }}
+        microk8s kubectl set image deployment/compareaki-api compareaki-api=${{ env.API_IMAGE }}
 
-        # Aguarda rollout
-        microk8s kubectl rollout status deployment/webserver --timeout=60s || ROLLOUT_FAILED=true
-        microk8s kubectl rollout status deployment/api --timeout=60s || ROLLOUT_FAILED=true
+        microk8s kubectl rollout status deployment/compareaki-webserver --timeout=60s || ROLLOUT_FAILED=true
+        microk8s kubectl rollout status deployment/compareaki-api --timeout=60s || ROLLOUT_FAILED=true
 
         if [ "$ROLLOUT_FAILED" = "true" ]; then
           echo "❌ Rollout failed. Rolling back..."
-          microk8s kubectl rollout undo deployment/webserver
-          microk8s kubectl rollout undo deployment/api
+          microk8s kubectl rollout undo deployment/compareaki-webserver
+          microk8s kubectl rollout undo deployment/compareaki-api
           exit 1
         fi
 
-        # Limpa pods antigos (garante que só as novas versões rodem)
-        microk8s kubectl delete pod -l app=webserver
-        microk8s kubectl delete pod -l app=api
+        # Limpa pods antigos
+        microk8s kubectl delete pod -l app=compareaki-webserver
+        microk8s kubectl delete pod -l app=compareaki-api
 
     - name: Verify Deployment
       if: success()
       run: |
         microk8s kubectl get pods -o wide
         microk8s kubectl get svc -o wide
-        microk8s kubectl describe deployment webserver
-        microk8s kubectl describe deployment api
+        microk8s kubectl describe deployment compareaki-webserver
+        microk8s kubectl describe deployment compareaki-api
 
