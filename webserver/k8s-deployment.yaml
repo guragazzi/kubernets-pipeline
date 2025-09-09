@@ -26,7 +26,7 @@ spec:
         app: compareaki-webserver
     spec:
       containers:
-        - name: webserver
+        - name: compareaki-webserver
           image: ragazzikyndryl/webserver:latest
           ports:
             - containerPort: 80
