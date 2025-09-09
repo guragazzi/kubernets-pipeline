@@ -1,50 +1,78 @@
-name: Deploy CompareAki Webserver + API
+name: Webserver & API CI/CD
 
 on:
   push:
-    paths:
-      - "webserver/**"
-      - "compareaki-api/**"
-      - ".github/workflows/deploy-all.yaml"
+    branches:
+      - main
 
 jobs:
   build-and-deploy:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      # -------- Docker Hub login único --------
-      - name: Login to Docker Hub
-        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
 
-      # -------- Webserver --------
-      - name: Build & Push Webserver Docker image
-        run: |
-          cd webserver
-          docker build -t ragazzikyndryl/webserver:latest .
-          docker push ragazzikyndryl/webserver:latest
+    - name: Log in to DockerHub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Deploy Webserver to Kubernetes
-        run: |
-          cd webserver
-          microk8s kubectl apply -f k8s-deployment.yaml
-          microk8s kubectl set image deployment/webserver webserver=ragazzikyndryl/webserver:latest
-          microk8s kubectl rollout status deployment/webserver
+    # ---------- BUILD & PUSH WEBSERVER ----------
+    - name: Build & Push Webserver
+      run: |
+        IMAGE=ragazzikyndryl/webserver
+        GIT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+        docker build -t $IMAGE:latest -t $IMAGE:$GIT_SHA ./webserver
+        docker push $IMAGE:latest
+        docker push $IMAGE:$GIT_SHA
+        echo "WEBSERVER_IMAGE=$IMAGE:$GIT_SHA" >> $GITHUB_ENV
 
-      # -------- API --------
-      - name: Build & Push API Docker image
-        run: |
-          cd compareaki-api
-          docker build -t ragazzikyndryl/compareaki-api:latest .
-          docker push ragazzikyndryl/compareaki-api:latest
+    # ---------- BUILD & PUSH API ----------
+    - name: Build & Push API
+      run: |
+        IMAGE=ragazzikyndryl/api
+        GIT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+        docker build -t $IMAGE:latest -t $IMAGE:$GIT_SHA ./compareaki-api
+        docker push $IMAGE:latest
+        docker push $IMAGE:$GIT_SHA
+        echo "API_IMAGE=$IMAGE:$GIT_SHA" >> $GITHUB_ENV
 
-      - name: Deploy API to Kubernetes
-        run: |
-          cd compareaki-api
-          microk8s kubectl apply -f k8s-deployment.yaml
-          microk8s kubectl set image deployment/compareaki-api compareaki-api=ragazzikyndryl/compareaki-api:latest
-          microk8s kubectl rollout status deployment/compareaki-api
+    # ---------- DEPLOY TO KUBERNETES ----------
+    - name: Deploy to Kubernetes
+      run: |
+        # Aplica os manifests (garante services/replicas/ports atualizados)
+        microk8s kubectl apply -f ./webserver/k8s-deployment.yaml
+        microk8s kubectl apply -f ./compareaki-api/k8s-deployment.yaml
 
+        # Atualiza imagens para SHA único
+        microk8s kubectl set image deployment/webserver webserver=${{ env.WEBSERVER_IMAGE }}
+        microk8s kubectl set image deployment/api api=${{ env.API_IMAGE }}
+
+        # Aguarda rollout
+        microk8s kubectl rollout status deployment/webserver --timeout=60s || ROLLOUT_FAILED=true
+        microk8s kubectl rollout status deployment/api --timeout=60s || ROLLOUT_FAILED=true
+
+        if [ "$ROLLOUT_FAILED" = "true" ]; then
+          echo "❌ Rollout failed. Rolling back..."
+          microk8s kubectl rollout undo deployment/webserver
+          microk8s kubectl rollout undo deployment/api
+          exit 1
+        fi
+
+        # Limpa pods antigos (garante que só as novas versões rodem)
+        microk8s kubectl delete pod -l app=webserver
+        microk8s kubectl delete pod -l app=api
+
+    - name: Verify Deployment
+      if: success()
+      run: |
+        microk8s kubectl get pods -o wide
+        microk8s kubectl get svc -o wide
+        microk8s kubectl describe deployment webserver
+        microk8s kubectl describe deployment api
 

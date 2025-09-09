@@ -1,31 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: compareaki-api
+  name: api
+  labels:
+    app: api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: compareaki-api
+      app: api
   template:
     metadata:
       labels:
-        app: compareaki-api
+        app: api
     spec:
       containers:
-        - name: compareaki-api
-          image: ragazzikyndryl/compareaki-api:latest
-          ports:
-            - containerPort: 3000
+      - name: api
+        image: ragazzikyndryl/api:latest # <- substituído pelo pipeline com SHA
+        ports:
+        - containerPort: 3000
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: compareaki-api-service
+  name: api-service
 spec:
   type: NodePort
   selector:
-    app: compareaki-api
+    app: api
   ports:
     - port: 3000
       targetPort: 3000

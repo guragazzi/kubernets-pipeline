@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: webserver
+  labels:
+    app: webserver
 spec:
   replicas: 1
   selector:
@@ -14,7 +16,7 @@ spec:
     spec:
       containers:
       - name: webserver
-        image: gragazzi/webserver:latest # será substituído pelo pipeline
+        image: ragazzikyndryl/webserver:latest # <- substituído pelo pipeline com SHA
         ports:
         - containerPort: 80
 ---
@@ -27,8 +29,7 @@ spec:
   selector:
     app: webserver
   ports:
-    - protocol: TCP
-      port: 80
+    - port: 80
       targetPort: 80
       nodePort: 30080
 
