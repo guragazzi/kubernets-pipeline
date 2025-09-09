@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>CompareAki</title>
@@ -30,8 +30,10 @@
   </table>
 
   <script>
+    const API_BASE = "http://compareaki-api-service:3000";
+
     async function carregarProdutos() {
-      const res = await fetch("http://192.168.0.172:30081/produtos"); // API Service
+      const res = await fetch(`${API_BASE}/produtos`);
       const produtos = await res.json();
       const select = document.getElementById("produtos");
       produtos.forEach(p => {
@@ -45,28 +47,17 @@
     document.getElementById("produtos").addEventListener("change", async function() {
       const id = this.value;
       if (!id) return;
-      const res = await fetch(`http://192.168.0.172:30081/produtos/${id}`);
+      const res = await fetch(`${API_BASE}/produtos/${id}`);
       const dados = await res.json();
       const tabela = document.getElementById("tabela");
       const tbody = tabela.querySelector("tbody");
       tbody.innerHTML = "";
-
-      if (dados.length === 0) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td colspan="4">Nenhum preço disponível para este produto</td>`;
-        tbody.appendChild(tr);
-        tabela.style.display = "table";
-        return;
-      }
-
       dados.forEach(d => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${d.nome_produto}</td>
-          <td>${d.supermercado}</td>
-          <td>R$ ${parseFloat(d.preco).toFixed(2)}</td>
-          <td>${new Date(d.data_coleta).toLocaleDateString("pt-BR")}</td>
-        `;
+        tr.innerHTML = `<td>${d.nome_produto}</td>
+                        <td>${d.supermercado}</td>
+                        <td>R$ ${d.preco}</td>
+                        <td>${new Date(d.data_coleta).toLocaleDateString()}</td>`;
         tbody.appendChild(tr);
       });
       tabela.style.display = "table";
